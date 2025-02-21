@@ -26,15 +26,41 @@ def sitemap():
     return generate_sitemap(app)
 
 
-@app.route('/members', methods=['GET'])
+@app.route('/members', methods=['GET', 'POST'])
 def handle_hello():
-    # This is how you can use the Family datastructure by calling its methods
     response_body = {}
-    members = jackson_family.get_all_members()
-    response_body['hello'] = "world"
-    response_body['family'] = members
-    return response_body, 200
+    if request.method == 'GET':
+        members = jackson_family.get_all_members()
+        response_body['hello'] = "world"
+        response_body['family'] = members
+        return response_body, 200
+    if request.method == 'POST':
+        data = request.json
+        jackson_family.add_member(data)
+        members = jackson_family.get_all_members()
+        response_body['family'] = members
+        response_body['message'] = 'Nuevo integrante de la familia agregado'
+        return response_body, 200
 
+@app.route('/members/<int:id>', methods=['GET', 'PUT', 'DELETE'])
+def member(id):
+    response_body = {}
+    if request.method == 'GET':
+        row = jackson_family.get_member(id)
+        if row:
+            response_body['results'] = row
+            response_body['message'] = 'Integrante encontrado'
+            return response_body, 200
+        response_body['message'] = f'Integrante con id {id} no encontrado'
+        return response_body, 402
+    if request.method == 'PUT':
+        pass
+    if request.method == 'DELETE':
+        rows = jackson_family.delete_member(id)
+        response_body['family'] = rows
+        response_body['message'] = f'Integrante con id {id} eliminado'
+        return response_body, 200
+    
 
 # This only runs if `$ python src/app.py` is executed
 if __name__ == '__main__':
